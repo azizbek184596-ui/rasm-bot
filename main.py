@@ -1,15 +1,16 @@
 """
 Matndan rasm generatsiya qiluvchi Telegram bot — BEPUL versiya.
-
-Bu yerda Pollinations.ai xizmati ishlatilgan — u to'liq bepul,
-ro'yxatdan o'tish yoki API kalit talab qilmaydi.
+Pollinations.ai xizmati ishlatilgan.
 """
 
 import io
+import os
 import random
 import urllib.parse
-import requests
+from threading import Thread
 
+import requests
+from flask import Flask
 from telegram import Update
 from telegram.ext import (
     ApplicationBuilder,
@@ -17,10 +18,22 @@ from telegram.ext import (
     ContextTypes,
 )
 
-import os
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 
+# --- Render uchun soxta veb-server ---
+web_app = Flask(__name__)
 
+
+@web_app.route('/')
+def home():
+    return "Bot ishlayapti!"
+
+
+def run_web():
+    web_app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 10000)))
+
+
+# --- Telegram bot qismi ---
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "Salom! 🎨\n"
@@ -68,6 +81,8 @@ async def generate(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 def main():
+    Thread(target=run_web).start()
+
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
